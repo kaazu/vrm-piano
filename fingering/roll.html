@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8"><title>Fingering roll</title>
+<style>
+  body{margin:0;background:#1b1b1f;color:#ddd;font:13px system-ui}
+  #bar{padding:8px 12px;display:flex;gap:10px;align-items:center;background:#24242a}
+  canvas{display:block}
+  .L{color:#4af} .R{color:#f86}
+</style></head>
+<body>
+<div id="bar">
+  <input id="file" type="file" accept=".json">
+  <span>or / または</span><input id="url" value="../songs/bach_polonaise_f/timeline.json" size="36"><button id="load">Load / 読む</button>
+  <label>Zoom / 横倍率 <input id="zoom" type="range" min="20" max="300" value="80"></label>
+  <span class="L">■ Left / 左手</span><span class="R">■ Right / 右手</span> number = finger (1 = thumb) / 数字=指（1=親指）
+  <span id="info"></span>
+</div>
+<div style="overflow:auto;height:calc(100vh - 40px)"><canvas id="c"></canvas></div>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');let tl=null;
+const isBlack=p=>[1,3,6,8,10].includes(p%12);
+function draw(){ if(!tl)return; const z=+zoom.value, H=10, lo=21, hi=108;
+  const dur=Math.max(...tl.notes.map(n=>n.end)); c.width=dur*z+60; c.height=(hi-lo+1)*H+20;
+  ctx.fillStyle='#1b1b1f';ctx.fillRect(0,0,c.width,c.height);
+  for(let p=lo;p<=hi;p++){const y=(hi-p)*H+10; ctx.fillStyle=isBlack(p)?'#202026':'#26262c'; ctx.fillRect(50,y,c.width,H); if(p%12===0){ctx.fillStyle='#777';ctx.fillText('C'+(p/12-1),4,y+9);}}
+  for(let s=0;s<dur;s++){const x=50+s*z;ctx.fillStyle='#333';ctx.fillRect(x,0,1,c.height);ctx.fillStyle='#888';ctx.fillText(s+'s',x+2,c.height-4);}
+  for(const n of tl.notes){const x=50+n.start*z,w=Math.max(3,(n.end-n.start)*z),y=(hi-n.pitch)*H+10;
+    ctx.fillStyle=n.hand==='L'?'rgba(68,170,255,.75)':'rgba(255,136,102,.75)';ctx.fillRect(x,y+1,w,H-2);
+    ctx.fillStyle='#000';ctx.font='bold 9px system-ui';ctx.fillText(n.finger,x+2,y+8);}
+  info.textContent=` ${tl.notes.length} notes, ${dur.toFixed(1)}s`;
+}
+async function loadUrl(u){tl=await (await fetch(u)).json();draw();}
+load.onclick=()=>loadUrl(url.value);
+file.onchange=e=>{const r=new FileReader();r.onload=()=>{tl=JSON.parse(r.result);draw();};r.readAsText(e.target.files[0]);};
+zoom.oninput=draw; loadUrl(url.value).catch(()=>{});
+</script></body></html>

@@ -1,0 +1,27 @@
+{
+  "name": "vrm-piano",
+  "version": "0.1.0",
+  "description": "Make VRM avatars play the piano from MIDI: fingering, arm/finger IK, expressions and body sway for three.js + three-vrm",
+  "type": "module",
+  "license": "MIT",
+  "author": "kaazu",
+  "repository": { "type": "git", "url": "git+https://github.com/kaazu/vrm-piano.git" },
+  "homepage": "https://github.com/kaazu/vrm-piano#readme",
+  "keywords": ["vrm", "three-vrm", "threejs", "piano", "midi", "fingering", "vtuber", "animation"],
+  "exports": {
+    ".": "./lib/performer.js",
+    "./autofit": "./lib/autofit.js",
+    "./sampler": "./lib/sampler.js",
+    "./fingering": "./fingering/engine.js",
+    "./midi": "./fingering/midi.js",
+    "./expression": "./expression/mood.js"
+  },
+  "files": ["lib", "fingering", "expression", "viewer", "tools", "songs", "README.ja.md"],
+  "scripts": {
+    "serve": "node tools/serve.mjs",
+    "test": "node fingering/test.js && node expression/test.js",
+    "fingering": "node fingering/cli.js",
+    "add-song": "node tools/add_song.mjs"
+  },
+  "engines": { "node": ">=18" }
+}

@@ -1,0 +1,7 @@
+node_modules/
+*.vrm
+*.bak
+*.bak-*
+*.before-*
+.DS_Store
+Thumbs.db

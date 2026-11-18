@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>指の位置 自動調整</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 16px; background: #1b1b1f; color: #ddd; font: 13px/1.5 system-ui, sans-serif; }
+  table { border-collapse: collapse; margin-top: 10px; }
+  th, td { border-bottom: 1px solid #333; padding: 4px 8px; text-align: right; font-variant-numeric: tabular-nums; }
+  th:first-child, td:first-child { text-align: left; }
+  button { background: #3a3a46; color: #eee; border: 0; padding: 6px 10px; border-radius: 5px; cursor: pointer; }
+  button:disabled { opacity: .5; }
+  #log { color: #9ab; white-space: pre-wrap; font-size: 12px; margin-top: 10px; }
+  .good { color: #8d8; } .bad { color: #f88; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
+  "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@3.3.0/lib/three-vrm.module.js"
+} }
+</script>
+</head>
+<body>
+<h3>指の位置 自動調整（全曲）</h3>
+<div lang="ja" class="help">曲ごとに、指が正しい鍵に届くよう鍵盤の位置・大きさと手の値を探します。1曲 1〜3 分ほど。<br>
+  終わったら「song.json を書き出す」で曲ごとにダウンロード → <code>songs/&lt;id&gt;/song.json</code> に上書き。<br>
+  URL パラメータ: <code>?vrm=</code> VRM の URL（なければファイルを選ぶ）、<code>&amp;songsDir=</code> 曲フォルダ、<code>&amp;songs=id1,id2</code> 曲をしぼる、<code>&amp;auto=1</code> 開くとすぐ始める（結果の保存は <code>node tools/apply_fit.mjs</code>）。</div>
+<div lang="en" class="help">For each song, searches the keyboard position/scale and hand values so fingers land on the right keys. About 1–3 minutes per song.<br>
+  When finished, "Export song.json" downloads one file per song → overwrite <code>songs/&lt;id&gt;/song.json</code>.<br>
+  URL parameters: <code>?vrm=</code> VRM URL (otherwise pick a file), <code>&amp;songsDir=</code> songs folder, <code>&amp;songs=id1,id2</code> limit songs, <code>&amp;auto=1</code> start immediately (save results with <code>node tools/apply_fit.mjs</code>).</div>
+<p><button id="pick">VRM</button><input id="vrmFile" type="file" accept=".vrm" hidden> <button id="run" disabled>…</button> <button id="dl" disabled>song.json を書き出す</button></p>
+<table id="tbl"><thead><tr><th>曲</th><th>違う鍵</th><th>浮き</th><th>届かない</th><th>左右</th><th>高さ</th><th>前後</th><th>大きさ</th><th>届き</th><th>手首</th><th>手前</th></tr></thead><tbody></tbody></table>
+<div id="log"></div>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
+import { PianoPerformer, loadSongConfig } from '../lib/performer.js';
+import { autoFit } from '../lib/autofit.js';
+import { translate, msg, songName, lang } from '../viewer/i18n.js';
+
+const $ = (id) => document.getElementById(id);
+const log = (m) => { $('log').textContent += m + '\n'; console.log(m); };
+const pct = (v) => (v * 100).toFixed(1) + '%';
+const scene = new THREE.Scene();
+const perf = new PianoPerformer({ THREE });
+const results = {}; window.fitResults = results; window.fitLog = [];
+
+const params = new URLSearchParams(location.search);
+const SONGS = (params.get('songsDir') || '../songs/').replace(/\/?$/, '/');
+for (const el of document.querySelectorAll('.help')) el.hidden = el.lang !== lang;
+translate();
+const idx = await (await fetch(SONGS + 'index.json')).json();
+const only = params.get('songs');
+const songs = idx.songs.filter((s) => !only || only.split(',').includes(s.id));
+// VRM: ?vrm= の URL、なければファイルを選んでもらう
+const loader = new GLTFLoader(); loader.register((p) => new VRMLoaderPlugin(p));
+let vrmUrl = params.get('vrm');
+if (!vrmUrl) {
+  $('run').textContent = msg.noVrm;
+  const file = await new Promise((ok) => { $('pick').onclick = () => $('vrmFile').click(); $('vrmFile').onchange = () => ok($('vrmFile').files[0]); });
+  vrmUrl = URL.createObjectURL(file);
+} else $('pick').hidden = true;
+$('run').textContent = msg.loadingVrm;
+const gltf = await loader.loadAsync(vrmUrl);
+const vrm = gltf.userData.vrm; VRMUtils.removeUnnecessaryVertices(gltf.scene); VRMUtils.combineSkeletons(gltf.scene); VRMUtils.rotateVRM0(vrm);
+scene.add(vrm.scene); perf.attach(vrm, scene); $('pick').disabled = true;
+$('run').disabled = false; $('run').textContent = msg.runN(songs.length);
+window.fitReady = true;
+
+async function run(ids) {
+  $('run').disabled = true; window.fitDone = false;
+  for (const s of songs.filter((x) => !ids || ids.includes(x.id))) {
+    log(`--- ${songName(s)}`);
+    const url = SONGS + s.config;
+    const raw = await (await fetch(url, { cache: 'no-store' })).json();
+    await perf.loadSong(await loadSongConfig(url), { silent: true });
+    const t0 = performance.now();
+    const r = await autoFit(perf, { onProgress: log });
+    log(`  ${((performance.now() - t0) / 1000).toFixed(0)} s`);
+    const merged = JSON.parse(JSON.stringify(raw));
+    merged.options = merged.options || {};
+    for (const [g, v] of Object.entries(r.options)) merged.options[g] = { ...(merged.options[g] || {}), ...v };
+    results[s.id] = { before: r.before, after: r.after, changed: r.changed, options: r.options, song: merged };
+    const o = r.options, c = (a, b) => `${pct(a)} → <span class="${b < a ? 'good' : b > a ? 'bad' : ''}">${pct(b)}</span>`;
+    $('tbl').tBodies[0].insertAdjacentHTML('beforeend', `<tr><td>${songName(s)}</td><td>${c(r.before.miss, r.after.miss)}</td><td>${c(r.before.float, r.after.float)}</td><td>${c(r.before.reach, r.after.reach)}</td><td>${o.keyboard.x}</td><td>${o.keyboard.height}</td><td>${o.keyboard.z}</td><td>${o.keyboard.scale}</td><td>${o.play.reach}</td><td>${o.play.wristHeight}</td><td>${o.play.wristBack}</td></tr>`);
+  }
+  window.fitDone = true; log(msg.done); $('dl').disabled = false; $('run').disabled = false;
+}
+$('run').onclick = () => run();
+$('dl').onclick = async () => {
+  for (const [id, r] of Object.entries(results)) {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(r.song, null, 2)], { type: 'application/json' }));
+    a.download = `${id}.song.json`; a.click(); await new Promise((ok) => setTimeout(ok, 300));
+  }
+  log(msg.downloaded);
+};
+window.runFit = run; window.perf = perf;
+// 定期作業用: 結果を apply_fit.mjs にそのまま渡せる形で返す
+window.fitCompact = () => JSON.stringify(Object.fromEntries(Object.entries(results).map(([id, r]) => [id, { options: r.options, after: { miss: r.after.miss, float: r.after.float, reach: r.after.reach }, changed: r.changed }])));
+// ?auto=1 で開くと読み込み後すぐに調整を始める（終わると window.fitDone = true）
+if (new URLSearchParams(location.search).get('auto') === '1') run().catch((e) => { window.fitErr = String(e.stack || e); log('Error: ' + e); });
+</script>
+</body>
+</html>

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>vrm-piano viewer</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; background: #1b1b1f; color: #ddd; font: 13px/1.4 system-ui, sans-serif; }
+  #c { position: fixed; inset: 0; }
+  #ui { position: fixed; left: 12px; top: 12px; width: 310px; background: rgba(20,20,24,.9); padding: 12px; border-radius: 8px; max-height: calc(100vh - 24px); overflow: auto; }
+  #ui h3 { margin: 0 0 8px; font-size: 14px; }
+  .row { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
+  .row label { flex: 1; }
+  .row input[type=range] { flex: 2; }
+  .row span.v { width: 44px; text-align: right; font-variant-numeric: tabular-nums; }
+  button { background: #3a3a46; color: #eee; border: 0; padding: 6px 10px; border-radius: 5px; cursor: pointer; }
+  button:hover { background: #4a4a5a; }
+  details { margin-top: 8px; } summary { cursor: pointer; color: #9ab; }
+  #log, .dbg { color: #9ab; white-space: pre-wrap; font-size: 11px; }
+  #log.err { color: #f88; }
+  #drop { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; color: #9ab; font-size: 16px; }
+  #drop[hidden] { display: none; }
+  #drop.over { background: rgba(80,120,200,.15); outline: 3px dashed #6af; outline-offset: -12px; }
+  select, input[type=text], input[type=number] { background: #2a2a33; color: #eee; border: 1px solid #444; border-radius: 4px; padding: 3px; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
+  "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@3.3.0/lib/three-vrm.module.js"
+} }
+</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="drop"><span id="dropMsg">VRM ファイルをここにドロップするか、「ファイルを選ぶ」を押してください</span></div>
+<div id="ui">
+  <h3>vrm-piano <button id="hide" style="float:right;padding:2px 8px">隠す(h)</button></h3>
+  <div class="row"><label>VRM</label><button id="openVrm">ファイルを選ぶ</button><input id="vrmFile" type="file" accept=".vrm" hidden><span id="vrmName" class="dbg" style="flex:2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span></div>
+  <div class="row"><label>曲</label><select id="song"></select><button id="reload">読む</button></div>
+  <div class="row"><button id="play">▶ 演奏</button><button id="pause">❚❚</button><button id="stop">■ 終了</button><span id="time" style="width:auto">0.0 s</span></div>
+  <div class="row"><label>位置</label><input id="seek" type="range" min="0" max="1000" step="1" value="0"></div>
+  <div class="row"><label>コマ送り</label><button id="prevNote">⏮音</button><button id="prevF">◀</button><button id="nextF">▶</button><button id="nextNote">音⏭</button></div>
+  <div class="row"><button id="export">設定を書き出す (song.json)</button><button id="glance">反応テスト</button></div>
+  <div class="row"><button id="autofit">指の位置を自動調整</button><span class="dbg" id="fitInfo" style="flex:1"></span></div>
+  <div class="dbg" id="state"></div>
+  <details open><summary>演奏</summary>
+    <div class="row"><label>先読み(秒)</label><input type="range" data-opt="play.lookahead" min="0" max="0.4" step="0.01"><span class="v"></span></div>
+    <div class="row"><label>手首の追従(秒)</label><input type="range" data-opt="play.wristTau" min="0.01" max="0.3" step="0.01"><span class="v"></span></div>
+    <div class="row"><label>手首の高さ</label><input type="range" data-opt="play.wristHeight" min="0.02" max="0.12" step="0.005"><span class="v"></span></div>
+    <div class="row"><label>手首の手前(指長×)</label><input type="range" data-opt="play.wristBack" min="0.2" max="1" step="0.05"><span class="v"></span></div>
+    <div class="row"><label>指の届き(倍)</label><input type="range" data-opt="play.reach" min="0.6" max="1.1" step="0.02"><span class="v"></span></div>
+    <div class="row"><label>休み指の曲げ</label><input type="range" data-opt="play.idleCurl" min="0" max="1" step="0.05"><span class="v"></span></div>
+    <div class="row"><label>押下の深さ</label><input type="range" data-opt="play.press" min="0" max="0.03" step="0.001"><span class="v"></span></div>
+    <div class="row"><label>手首ひねり(deg)</label><input type="range" data-opt="play.wristTwist" min="-60" max="60" step="1"><span class="v"></span></div>
+    <div class="row"><label><input type="checkbox" data-opt="play.flipCurl"> 曲げ反転</label><label><input type="checkbox" data-opt="play.flipYaw"> ひろがり反転</label></div>
+  </details>
+  <details open><summary>配置</summary>
+    <div class="row"><label>鍵盤の大きさ</label><input type="range" data-opt="keyboard.scale" min="0.4" max="1" step="0.01"><span class="v"></span></div>
+    <div class="row"><label>鍵盤の高さ</label><input type="range" data-opt="keyboard.height" min="0.3" max="1.2" step="0.01"><span class="v"></span></div>
+    <div class="row"><label>鍵盤の前後</label><input type="range" data-opt="keyboard.z" min="0.1" max="0.6" step="0.01"><span class="v"></span></div>
+    <div class="row"><label>鍵盤の左右</label><input type="range" data-opt="keyboard.x" min="-0.3" max="0.3" step="0.01"><span class="v"></span></div>
+    <div class="row"><label>体の前後</label><input type="range" data-opt="body.z" min="-0.3" max="0.3" step="0.01"><span class="v"></span></div>
+    <div class="row"><label>体の高さ</label><input type="range" data-opt="body.y" min="-0.4" max="0.1" step="0.01"><span class="v"></span></div>
+    <div class="row"><button id="camFront">正面</button><button id="camHands">手元</button><button id="camTop">上から</button><button id="camSide">横</button></div>
+  </details>
+  <details open><summary>揺れ・ビート</summary>
+    <div class="row"><label>上体の傾き（手の方向）</label><input type="range" data-opt="sway.lean" min="0" max="1.5" step="0.05"><span class="v"></span></div>
+    <div class="row"><label>首のビート</label><input type="range" data-opt="sway.beatHead" min="0" max="1.5" step="0.05"><span class="v"></span></div>
+    <div class="row"><label>下半身のビート</label><input type="range" data-opt="sway.beatBody" min="0" max="1.5" step="0.05"><span class="v"></span></div>
+    <div class="row"><label>BPM（0=自動）</label><input type="number" data-opt="beat.bpm" min="0" max="240" step="0.5" style="width:70px"><span id="bpmAuto" style="width:auto"></span></div>
+    <div class="row"><label>拍のずれ(秒)</label><input type="range" data-opt="beat.offset" min="-0.5" max="0.5" step="0.01"><span class="v"></span></div>
+    <div class="row"><label>拍の単位</label><select data-opt="beat.div"><option value="1">1拍ごと</option><option value="2">2拍ごと</option><option value="0.5">半拍ごと</option></select></div>
+    <div class="row"><label>拍の取り方</label><select data-opt="beat.feel"><option value="down">表拍</option><option value="off">裏拍（半拍ずらす）</option><option value="back">2拍・4拍（バックビート）</option></select></div>
+    <div class="row"><label>タップで合わせる</label><button id="tap">T キー / ここを押す</button><button id="tapClear">消す</button></div>
+    <div class="dbg" id="tapInfo">再生しながら、自分が体を揺らすタイミングで T を押す（4回以上）</div>
+  </details>
+  <details open><summary>表情</summary>
+    <div class="row"><label>モード</label><select data-opt="expression.mode"><option value="auto">自動（曲・運指から）</option><option value="none">なし</option><option value="happy">笑顔</option><option value="relaxed">リラックス</option><option value="sad">悲しい</option><option value="focus">集中</option></select></div>
+    <div class="row"><label>強さ</label><input type="range" data-opt="expression.intensity" min="0" max="1.5" step="0.05"><span class="v"></span></div>
+    <div class="row"><label>反応の速さ</label><input type="range" data-opt="expression.reaction" min="0.3" max="3" step="0.1"><span class="v"></span></div>
+    <div class="row"><label>先読み(秒)</label><input type="range" data-opt="expression.lookahead" min="0" max="0.5" step="0.05"><span class="v"></span></div>
+    <div class="row"><label><input type="checkbox" data-opt="expression.lookAtHands"> 目線は手元</label></div>
+    <div class="row"><label><input type="checkbox" data-opt="lipsync.enabled"> 歌の口パク</label><span id="lipInfo" style="width:auto"></span></div>
+    <div class="row"><label>口の開き(倍)</label><input type="range" data-opt="lipsync.gain" min="0" max="1.5" step="0.05"><span class="v"></span></div>
+    <div class="row"><label>口を早める(秒)</label><input type="range" data-opt="lipsync.lead" min="-0.1" max="0.15" step="0.01"><span class="v"></span></div>
+    <div class="row"><label>歌う間 笑顔を弱める</label><input type="range" data-opt="lipsync.happyDuck" min="0" max="1" step="0.05"><span class="v"></span></div>
+    <div class="dbg" id="exDebug"></div>
+  </details>
+  <div id="log"></div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
+import { PianoPerformer, loadSongConfig } from '../lib/performer.js';
+import { autoFit } from '../lib/autofit.js';
+import { translate, msg, songName } from './i18n.js';
+
+// URL パラメータ: ?vrm=<VRM の URL>  ?songsDir=<曲フォルダ（index.json がある所）>  ?lang=ja|en
+const params = new URLSearchParams(location.search);
+const SONGS = (params.get('songsDir') || '../songs/').replace(/\/?$/, '/');
+translate();
+
+const $ = (id) => document.getElementById(id);
+const log = (m, err) => { $('log').textContent += m + '\n'; if (err) $('log').className = 'err'; };
+
+// ---------- scene ----------
+const renderer = new THREE.WebGLRenderer({ canvas: $('c'), antialias: true });
+renderer.setPixelRatio(devicePixelRatio); renderer.setSize(innerWidth, innerHeight);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x1b1b1f);
+const camera = new THREE.PerspectiveCamera(35, innerWidth / innerHeight, 0.05, 50);
+const controls = new OrbitControls(camera, $('c'));
+scene.add(new THREE.HemisphereLight(0xffffff, 0x444466, 1.2));
+const dl = new THREE.DirectionalLight(0xffffff, 1.4); dl.position.set(1, 2, 2); scene.add(dl);
+scene.add(new THREE.GridHelper(4, 20, 0x333344, 0x2a2a33));
+const cams = { front: [[0, 1.3, 1.7], [0, 0.9, 0.2]], hands: [[0.35, 1.2, 0.95], [0, 0.78, 0.3]], top: [[0, 2.2, 0.4], [0, 0.78, 0.3]], side: [[1.2, 1.0, 0.4], [0, 0.85, 0.2]] };
+const setCam = (k) => { camera.position.set(...cams[k][0]); controls.target.set(...cams[k][1]); };
+setCam('hands');
+for (const k of ['Front', 'Hands', 'Top', 'Side']) $('cam' + k).onclick = () => setCam(k.toLowerCase());
+
+// ---------- performer ----------
+const perf = new PianoPerformer({ THREE });
+globalThis.__viewer = { perf, camera, controls, renderer, scene, get vrm() { return vrm; }, loadVRM }; // 確認用（コンソールから触る）
+perf.on('samplerProgress', (p) => { $('play').textContent = `${msg.samples} ${p.done}/${p.total}`; if (p.done === p.total) log('piano samples loaded'); }).on('start', (s) => log('start: ' + s.song)).on('end', () => log('end')).on('songEnd', () => log('song finished'));
+let vrm = null;
+const loader = new GLTFLoader(); loader.register((p) => new VRMLoaderPlugin(p));
+// VRM を読む（URL か File）。2 体目以降は前の VRM を外してから付けかえる
+async function loadVRM(src, label) {
+  $('dropMsg').textContent = msg.loadingVrm; $('drop').hidden = false;
+  const url = src instanceof Blob ? URL.createObjectURL(src) : src;
+  try {
+    const gltf = await loader.loadAsync(url);
+    if (vrm) { perf.dispose(); scene.remove(vrm.scene); VRMUtils.deepDispose(vrm.scene); }
+    vrm = gltf.userData.vrm;
+    VRMUtils.removeUnnecessaryVertices(gltf.scene); VRMUtils.combineSkeletons(gltf.scene); VRMUtils.rotateVRM0(vrm);
+    scene.add(vrm.scene);
+    perf.attach(vrm, scene);
+    if (songCfg) await perf.loadSong(songCfg);
+    $('vrmName').textContent = label || String(src).split('/').pop();
+    $('drop').hidden = true;
+    log(msg.vrmLoaded + ' ' + perf.handInfo.fingerLen.map((v) => v.toFixed(3)).join(' '));
+    syncUI();
+  } catch (e) { $('dropMsg').textContent = msg.noVrm; log(msg.vrmError + ' ' + e, true); }
+  finally { if (src instanceof Blob) URL.revokeObjectURL(url); }
+}
+$('openVrm').onclick = () => $('vrmFile').click();
+$('vrmFile').onchange = () => { const f = $('vrmFile').files[0]; if (f) loadVRM(f, f.name); };
+addEventListener('dragover', (e) => { e.preventDefault(); $('drop').classList.add('over'); $('drop').hidden = false; });
+addEventListener('dragleave', (e) => { if (!e.relatedTarget) { $('drop').classList.remove('over'); if (vrm) $('drop').hidden = true; } });
+addEventListener('drop', (e) => { e.preventDefault(); $('drop').classList.remove('over'); const f = [...e.dataTransfer.files].find((x) => /\.vrm$/i.test(x.name)); if (f) loadVRM(f, f.name); else if (vrm) $('drop').hidden = true; });
+if (params.get('vrm')) loadVRM(params.get('vrm'));
+
+// ---------- songs ----------
+let songCfg = null; const playLabel = $('play').textContent;
+async function loadSongList() {
+  const idx = await (await fetch(SONGS + 'index.json')).json();
+  $('song').innerHTML = idx.songs.map((s) => `<option value="${SONGS}${s.config}">${songName(s)}</option>`).join('');
+}
+async function loadSong(url) {
+  $('play').disabled = true; $('play').textContent = msg.loading;
+  songCfg = await loadSongConfig(url);
+  const info = await perf.loadSong(songCfg);
+  $('play').disabled = false; $('play').textContent = playLabel;
+  $('bpmAuto').textContent = `自動: ${info.bpm} BPM`;
+  log(`song: ${songCfg.name} ${info.notes} notes ${info.duration.toFixed(1)}s`);
+  syncUI();
+}
+$('reload').onclick = () => loadSong($('song').value);
+$('song').onchange = () => loadSong($('song').value);
+loadSongList().then(() => loadSong($('song').value)).catch((e) => log(msg.songError + ' ' + e, true));
+
+// ---------- UI <-> options ----------
+const getPath = (o, p) => p.split('.').reduce((a, k) => a?.[k], o);
+const setPath = (p, v) => { const ks = p.split('.'); const o = {}; let cur = o; ks.forEach((k, i) => { cur[k] = i === ks.length - 1 ? v : {}; cur = cur[k]; }); perf.setOptions(o); };
+function syncUI() {
+  for (const el of document.querySelectorAll('[data-opt]')) {
+    const v = getPath(perf.options, el.dataset.opt); if (v === undefined) continue;
+    if (el.type === 'checkbox') el.checked = !!v; else el.value = v;
+    const sp = el.parentElement.querySelector('span.v'); if (sp) sp.textContent = typeof v === 'number' ? v.toFixed(el.step?.includes('.') ? el.step.split('.')[1].length : 0) : v;
+  }
+}
+for (const el of document.querySelectorAll('[data-opt]')) {
+  el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', () => {
+    let v = el.type === 'checkbox' ? el.checked : el.tagName === 'SELECT' && isNaN(+el.value) ? el.value : +el.value;
+    if (el.dataset.opt === 'expression.mode' || el.dataset.opt === 'beat.feel') v = el.value;
+    setPath(el.dataset.opt, v);
+    const sp = el.parentElement.querySelector('span.v'); if (sp && typeof v === 'number') sp.textContent = v.toFixed(el.step?.includes('.') ? el.step.split('.')[1].length : 0);
+  });
+}
+
+// ---------- transport ----------
+$('play').onclick = () => { if (!vrm) { log(msg.needVrm, true); return; } if (perf.state === 'paused') perf.resume(); else perf.play(); };
+$('pause').onclick = () => perf.pause();
+$('stop').onclick = () => perf.stop();
+$('seek').oninput = () => perf.seek($('seek').value / 1000 * perf.duration);
+const FRAME = 1 / 30;
+const pauseIf = () => { if (perf.clock.playing) perf.pause(); if (perf.weight < 1) { perf._weightTarget = 1; } };
+const starts = () => [...new Set(perf.tl.notes.map((n) => n.start))].sort((a, b) => a - b);
+$('prevF').onclick = () => { pauseIf(); perf.seek(perf.time - FRAME); };
+$('nextF').onclick = () => { pauseIf(); perf.seek(perf.time + FRAME); };
+$('prevNote').onclick = () => { pauseIf(); const t = perf.time; const p = starts().filter((x) => x < t - 0.005); perf.seek(p.length ? p[p.length - 1] + 0.03 : 0); };
+$('nextNote').onclick = () => { pauseIf(); const t = perf.time; const n = starts().find((x) => x > t + 0.005); perf.seek(n != null ? n + 0.03 : perf.duration); };
+$('glance').onclick = () => perf.glance(0.45, -0.05, 1.5, { happy: 0.6 });
+// 指の位置の自動調整: 鍵盤の位置・大きさと手の値を探す（終わったら「設定を書き出す」で保存）
+$('autofit').onclick = async () => {
+  if (!vrm) { log(msg.needVrm, true); return; } if (!perf.tl) return;
+  const was = perf.time; perf.pause(); $('autofit').disabled = true;
+  try {
+    const r = await autoFit(perf, { onProgress: (m) => { $('fitInfo').textContent = m; log('[auto-fit] ' + m); } });
+    syncUI(); perf.seek(was);
+    $('fitInfo').textContent = r.changed ? msg.fitDone : msg.fitSame;
+  } catch (e) { log(msg.fitError + ' ' + e, true); }
+  $('autofit').disabled = false;
+};
+
+// 設定の書き出し: song.json をダウンロード
+$('export').onclick = () => {
+  if (!songCfg) return;
+  const out = { name: songCfg.name, ...(songCfg.nameJa ? { nameJa: songCfg.nameJa } : {}), composer: songCfg.composer, credit: songCfg.credit, audio: songCfg.audio ? songCfg.audio.split('/').pop() : null, synth: songCfg.synth, timeline: songCfg.timeline.split('/').pop(), vocals: songCfg.vocals ? songCfg.vocals.split('/').pop() : null, lipsync: songCfg.lipsync ? songCfg.lipsync.split('/').pop() : null, fit: songCfg.fit, options: perf.exportOptions() };
+  const blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'song.json'; a.click();
+  log(msg.exported);
+};
+
+// ---------- tap tempo ----------
+const taps = [];
+function tapBeat(tAt) {
+  if (!perf.tl) return; taps.push(typeof tAt === 'number' ? tAt : perf.time);
+  if (taps.length < 4) { $('tapInfo').textContent = msg.tapMore(taps.length); return; }
+  const d = []; for (let i = 1; i < taps.length; i++) d.push(taps[i] - taps[i - 1]); d.sort((a, b) => a - b);
+  const period = d[d.length >> 1], bpm = 60 / period, beat = perf.beat;
+  let ax = 0, ay = 0; for (const t of taps) { const p = ((t - beat.offset) / beat.period) % 1; ax += Math.cos(p * 2 * Math.PI); ay += Math.sin(p * 2 * Math.PI); }
+  const rel = ((Math.atan2(ay, ax) / (2 * Math.PI)) % 1 + 1) % 1;
+  const nearAuto = Math.abs(bpm - beat.bpm) / beat.bpm < 0.08; const per = nearAuto ? beat.period : period;
+  let diff = rel * per - 0.15; diff = ((diff + per / 2) % per + per) % per - per / 2; // バネの頂点遅れ分を早める
+  perf.setOptions({ beat: { bpm: nearAuto ? 0 : +bpm.toFixed(1), offset: +diff.toFixed(2), feel: 'down', div: 1 } }); syncUI();
+  $('tapInfo').textContent = msg.tapResult(taps.length, bpm.toFixed(1), beat.bpm, (rel * 100).toFixed(0));
+}
+$('tap').onclick = () => tapBeat(); $('tapClear').onclick = () => { taps.length = 0; $('tapInfo').textContent = msg.tapCleared; };
+
+// ---------- keys ----------
+$('hide').onclick = () => { $('ui').style.display = 'none'; };
+addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  if (e.key === 'h') $('ui').style.display = $('ui').style.display === 'none' ? '' : 'none';
+  if (e.key === ' ') { e.preventDefault(); (perf.clock.playing ? $('pause') : $('play')).click(); }
+  if (e.key === 'ArrowLeft') $('prevF').click(); if (e.key === 'ArrowRight') $('nextF').click();
+  if (e.key === ',') $('prevNote').click(); if (e.key === '.') $('nextNote').click();
+  if (e.key === 't' || e.key === 'T') tapBeat();
+});
+addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
+
+// ---------- loop ----------
+const clock = new THREE.Clock();
+function tick() {
+  requestAnimationFrame(tick);
+  const dt = clock.getDelta();
+  if (perf.tl) {
+    const t = perf.time;
+    $('time').textContent = `${t.toFixed(2)} s  [${perf.state} w=${perf.weight.toFixed(2)}]`;
+    if (document.activeElement !== $('seek')) $('seek').value = Math.round(t / perf.duration * 1000);
+  }
+  perf.update(dt);
+  if (perf.lastExpression) {
+    const st = perf.getState(), w = perf.lastExpression, f = perf.lastFeatures;
+    $('exDebug').textContent = `valence ${st.mood.valence.toFixed(2)} arousal ${st.mood.arousal.toFixed(2)} focus ${st.mood.focus.toFixed(2)}\ndifficulty ${f.difficulty.toFixed(0)} density ${f.density} major ${f.majorness.toFixed(2)}\nhappy ${w.happy.toFixed(2)} relaxed ${w.relaxed.toFixed(2)} sad ${w.sad.toFixed(2)} serious ${w.angry.toFixed(2)}` + (perf.lastLip ? `\n口 あ${perf.lastLip[0].toFixed(2)} い${perf.lastLip[1].toFixed(2)} う${perf.lastLip[2].toFixed(2)} え${perf.lastLip[3].toFixed(2)} お${perf.lastLip[4].toFixed(2)}` : '');
+    $('state').textContent = `progress ${(st.progress * 100).toFixed(0)}%  ${st.isHard ? msg.hard : ''}`;
+  }
+  if (vrm) vrm.update(dt);
+  controls.update(); renderer.render(scene, camera);
+}
+tick();
+window.app = { perf, scene, camera, controls, get vrm() { return vrm; }, tapBeat, loadSong, loadVRM };
+</script>
+</body>
+</html>

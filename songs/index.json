@@ -1,0 +1,18 @@
+{
+  "songs": [
+    {
+      "id": "bach_polonaise_f",
+      "name": "Bach: Polonaise in F major (Notebook for Anna Magdalena Bach)",
+      "nameJa": "バッハ：ポロネーズ ヘ長調（アンナ・マグダレーナ・バッハのための音楽帳）",
+      "config": "bach_polonaise_f/song.json",
+      "composer": "Johann Sebastian Bach (1685–1750)"
+    },
+    {
+      "id": "bach_chorale_bwv269",
+      "name": "Bach: Chorale \"Aus meines Herzens Grunde\" BWV 269",
+      "nameJa": "バッハ：コラール「心のおくそこから」BWV 269",
+      "config": "bach_chorale_bwv269/song.json",
+      "composer": "Johann Sebastian Bach (1685–1750)"
+    }
+  ]
+}
