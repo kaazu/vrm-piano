@@ -2,6 +2,10 @@
 
 [English](README.md)
 
+![vrm-piano で VRM のキャラクターがピアノを弾いている画面](docs/screenshot.png)
+
+<sub>キャラクター: VRM1_Constraint_Twist_Sample (c) pixiv Inc.、VRM パブリック・ライセンス 1.0（`models/` に同梱）</sub>
+
 MIDI ファイルから、VRM のキャラクターにピアノを弾かせます。ブラウザ（three.js ＋ three-vrm）で動きます。
 
 - **運指**: どの音をどちらの手のどの指で弾くかを自動で決めます（指の位置を Viterbi で探索。親指くぐり、和音の広がり、押さえている音から指を離してペダルで残す、など）

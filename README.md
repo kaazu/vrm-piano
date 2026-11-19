@@ -2,6 +2,10 @@
 
 [日本語](README.ja.md)
 
+![A VRM avatar playing the piano with vrm-piano](docs/screenshot.png)
+
+<sub>Avatar: VRM1_Constraint_Twist_Sample (c) pixiv Inc., VRM Public License 1.0 (bundled in `models/`)</sub>
+
 Make a VRM avatar play the piano from a MIDI file, in the browser with three.js and three-vrm.
 
 - **Fingering**: works out which hand and finger plays each note (Viterbi search over finger positions; thumb crossings, chord spans, releasing held notes onto the pedal)
