@@ -142,13 +142,13 @@ MIDI のコツ: ピアノ独奏が向いています。同時に鳴らせるの�
 | `viewer/` | デモ兼調整ツール |
 | `tools/` | ローカルサーバー、add_song、自動調整ページ、apply_fit |
 | `songs/` | デモ曲 |
-| `models/` | サンプルのキャラクター（VRM パブリック・ライセンス 1.0。`models/README.md`） |
+| `models/` | サンプルのキャラクター（100Avatars、Polygonal Mind、CC BY 4.0。`models/README.md`） |
 
 `npm test` で運指と表情のテストを実行します。
 
 ## 注意と制限
 
-- Chrome で、VRM 1.0 のモデル（同梱のサンプルと、VRM 仕様のサンプルの Seed-san）と、VRoid Studio の VRM 0.x のモデルで確認しています
+- Chrome で、VRM 0.x のモデル（同梱の 100Avatars のサンプル、VRoid Studio のモデル）と、VRM 1.0 のモデル（VRM 仕様のサンプルの VRM1_Constraint_Twist_Sample と Seed-san）で確認しています
 - 表情は VRM の標準プリセット（`happy` `relaxed` `sad` `angry` `surprised` `blink` `aa` `ou`）を使います。VRM 0.x では、カスタムの `Surprised` があればそれを使います
 - スカートや髪と、腕・鍵盤との当たり判定はありません
 - MIDI キーボードからのリアルタイム演奏には対応していません（曲は前もって計算します）
@@ -157,7 +157,7 @@ MIDI のコツ: ピアノ独奏が向いています。同時に鳴らせるの�
 ## クレジットとライセンス
 
 - コード: [MIT License](LICENSE) © kaazu
-- サンプルのキャラクター `models/VRM1_Constraint_Twist_Sample.vrm`: (c) 2022 pixiv Inc.、[VRM パブリック・ライセンス 1.0](https://vrm.dev/licenses/1.0/)、[vrm-c/vrm-specification](https://github.com/vrm-c/vrm-specification/tree/master/samples/VRM1_Constraint_Twist_Sample) から無改変で同梱。MIT ライセンスの対象外です。ファイルのライセンス設定で再配布・改変が許可されています。詳しくは [models/README.md](models/README.md)
+- サンプルのキャラクター `models/100Avatars_001_Crimsom.vrm`: [100Avatars](https://github.com/polygonalmind/100avatars)（Polygonal Mind）の「Crimson」、[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)（VRM ファイルの中の設定は CC0）。無改変で同梱。MIT ライセンスの対象外です。詳しくは [models/README.md](models/README.md)
 - デモ曲の MIDI: [Mutopia Project](https://www.mutopiaproject.org/)、パブリックドメイン
   - J. S. バッハ「ポロネーズ ヘ長調」（アンナ・マグダレーナ・バッハのための音楽帳）— [piece 1013](https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=1013)
   - J. S. バッハ コラール「心のおくそこから」BWV 269 — [piece 378](https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=378)

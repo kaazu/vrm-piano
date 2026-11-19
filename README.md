@@ -141,7 +141,7 @@ For automation, open it with `&auto=1`, save the result of `window.fitCompact()`
 | `viewer/` | Demo and tuning tool |
 | `tools/` | Local server, add_song, autofit page, apply_fit |
 | `songs/` | Demo songs |
-| `models/` | Sample avatar (VRM Public License 1.0, see `models/README.md`) |
+| `models/` | Sample avatar (100Avatars by Polygonal Mind, CC BY 4.0, see `models/README.md`) |
 
 `npm test` runs the fingering and expression tests.
 
@@ -149,7 +149,7 @@ Code comments are mostly in Japanese.
 
 ## Notes and limitations
 
-- Tested in Chrome with VRM 1.0 models (the bundled sample and Seed-san from the VRM specification samples) and a VRoid Studio VRM 0.x model.
+- Tested in Chrome with VRM 0.x models (the bundled 100Avatars sample and a VRoid Studio model) and VRM 1.0 models (VRM1_Constraint_Twist_Sample and Seed-san from the VRM specification samples).
 - Expressions use the standard VRM presets (`happy`, `relaxed`, `sad`, `angry`, `surprised`, `blink`, `aa`, `ou`); on VRM 0.x a custom `Surprised` is used if present.
 - Skirts and hair have no collision with the arms or keyboard.
 - Real-time playing from a MIDI keyboard is not supported (songs are computed in advance).
@@ -158,7 +158,7 @@ Code comments are mostly in Japanese.
 ## Credits and licenses
 
 - Code: [MIT License](LICENSE) © kaazu
-- Sample avatar `models/VRM1_Constraint_Twist_Sample.vrm`: (c) 2022 pixiv Inc., [VRM Public License 1.0](https://vrm.dev/licenses/1.0/), from [vrm-c/vrm-specification](https://github.com/vrm-c/vrm-specification/tree/master/samples/VRM1_Constraint_Twist_Sample). Not covered by the MIT License; its own license settings allow redistribution and modification. See [models/README.md](models/README.md).
+- Sample avatar `models/100Avatars_001_Crimsom.vrm`: "Crimson" from [100Avatars](https://github.com/polygonalmind/100avatars) by Polygonal Mind, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) (the VRM file itself says CC0). Not covered by the MIT License. See [models/README.md](models/README.md).
 - Demo MIDI files: [Mutopia Project](https://www.mutopiaproject.org/), Public Domain
   - J. S. Bach, Polonaise in F major (Notebook for Anna Magdalena Bach) — [piece 1013](https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=1013)
   - J. S. Bach, Chorale "Aus meines Herzens Grunde" BWV 269 — [piece 378](https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=378)

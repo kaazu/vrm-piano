@@ -16,9 +16,9 @@
   "options": {
     "keyboard": {
       "scale": 0.65,
-      "height": 0.88,
+      "height": 0.76,
       "z": 0.28,
-      "x": 0.02
+      "x": 0.06
     },
     "body": {
       "x": 0,
@@ -28,7 +28,7 @@
     "play": {
       "lookahead": 0.12,
       "wristTau": 0.06,
-      "wristHeight": 0.03,
+      "wristHeight": 0.045,
       "reach": 0.9,
       "idleCurl": 0.35,
       "press": 0.012,
@@ -76,8 +76,8 @@
   },
   "fit": {
     "at": "2026-11-19",
-    "miss": 0.051,
-    "float": 0.03,
-    "reach": 0.004
+    "miss": 0.013,
+    "float": 0.038,
+    "reach": 0
   }
 }

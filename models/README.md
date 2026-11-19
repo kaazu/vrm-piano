@@ -1,16 +1,11 @@
 # Sample model / サンプルモデル
 
-`VRM1_Constraint_Twist_Sample.vrm`
+`100Avatars_001_Crimsom.vrm`
 
-- Source / 入手元: [vrm-c/vrm-specification](https://github.com/vrm-c/vrm-specification/tree/master/samples/VRM1_Constraint_Twist_Sample) (unmodified / 無改変)
-- Copyright: (c) 2022 pixiv Inc.
-- License / ライセンス: [VRM Public License 1.0](https://vrm.dev/licenses/1.0/) — **not** covered by this repository's MIT License / このリポジトリの MIT ライセンスの対象外です
-- License settings in the file / ファイル内のライセンス設定:
-  - Redistribution / 再配布: allowed / 可
-  - Modification / 改変: allowed, including redistribution of modified versions / 改変・改変物の再配布 可
-  - Commercial use / 商用利用: allowed, including corporations / 法人を含めて可
-  - Avatar use / アバターとしての利用: everyone / 誰でも可
-  - Credit / クレジット表記: not required / 不要
-  - Antisocial or hate usage / 反社会的・憎悪表現での利用: **not allowed / 不可**
+- Source / 入手元: [100Avatars](https://github.com/polygonalmind/100avatars) by [Polygonal Mind](https://www.polygonalmind.com/) (`100Avatars_001/100Avatars_001_Crimsom.vrm`, commit ff07c2a, unmodified / 無改変)
+- Author / 作者: Polygonal Mind (100Avatars by ToxSam and the Polygonal Mind team)
+- License / ライセンス: the repository's license file is [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); the license setting inside the VRM file is CC0. We credit the author so that the CC BY 4.0 terms are met either way. / リポジトリのライセンス文書は CC BY 4.0、VRM ファイルの中の設定は CC0 です。どちらの場合も条件を満たすよう、作者を表記しています。
+- **Not** covered by this repository's MIT License. / このリポジトリの MIT ライセンスの対象外です。
+- The authors ask that the avatars not be sold without major modification. / 作者は、大きく改変しないまま販売しないよう求めています。
 
-The file's own license settings (`VRMC_vrm.meta`) are authoritative. / 正式な条件は、ファイルの中のライセンス設定（`VRMC_vrm.meta`）です。
+Credit / クレジット: "Crimson" from 100Avatars by Polygonal Mind (CC BY 4.0)
