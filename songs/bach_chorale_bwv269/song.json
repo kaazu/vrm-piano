@@ -17,8 +17,8 @@
     "keyboard": {
       "scale": 0.99,
       "height": 0.98,
-      "z": 0.28,
-      "x": -0.04
+      "z": 0.36,
+      "x": -0.1
     },
     "body": {
       "x": 0,
@@ -35,7 +35,7 @@
       "wristTwist": 0,
       "flipCurl": false,
       "flipYaw": false,
-      "wristBack": 0.6,
+      "wristBack": 0.4,
       "tipSolve": true,
       "wristWeighted": true
     },
@@ -73,5 +73,17 @@
     "gain": 1,
     "velCurve": 1,
     "dynamics": true
+  },
+  "fit": {
+    "at": "2026-11-19",
+    "miss": 0.221,
+    "float": 0,
+    "reach": 0,
+    "fixed": [
+      "keyboard.scale",
+      "keyboard.height",
+      "keyboard.z",
+      "play.wristHeight"
+    ]
   }
 }
