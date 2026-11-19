@@ -1,5 +1,6 @@
 node_modules/
 *.vrm
+!models/*.vrm
 *.bak
 *.bak-*
 *.before-*

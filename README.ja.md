@@ -21,9 +21,9 @@ cd vrm-piano
 npm run serve
 ```
 
-http://localhost:8001/viewer/ を開き、`.vrm` ファイルをページにドロップします（または「ファイルを選ぶ」）。曲を選んで ▶ 演奏。最初の 1 回は、ピアノの音源（約 60 ファイル）を jsDelivr から読み込みます。
+http://localhost:8001/viewer/ を開くと、サンプルのキャラクターが読み込まれます。曲を選んで ▶ 演奏。最初の 1 回は、ピアノの音源（約 60 ファイル）を jsDelivr から読み込みます。
 
-VRM は同梱していません。[VRoid Studio](https://vroid.com/studio) で作るか、利用条件で使ってよい VRM を用意してください。
+自分のキャラクターを使うときは、`.vrm` ファイルをページにドロップし（または「ファイルを選ぶ」）、「指の位置を自動調整」を押してください。VRM 0.x と VRM 1.0 のどちらも使えます。[VRoid Studio](https://vroid.com/studio) で作ることもできます。
 
 ビューアとツールは Web サーバー経由で開いてください（`file://` では ES モジュールと `fetch` が動きません）。`tools/serve.mjs` は依存なしの小さなサーバーです。ほかの静的サーバーでもかまいません。
 
@@ -31,7 +31,7 @@ VRM は同梱していません。[VRoid Studio](https://vroid.com/studio) で�
 
 | パラメータ | 意味 |
 |---|---|
-| `?vrm=<URL>` | 開いたときにこの VRM を読む |
+| `?vrm=<URL>` | 開いたときにこの VRM を読む（既定は同梱のサンプル） |
 | `?songsDir=<URL>` | `index.json` がある曲フォルダ（既定 `../songs/`） |
 | `?lang=ja` / `?lang=en` | 画面の言語（既定はブラウザの言語） |
 
@@ -121,7 +121,7 @@ MIDI のコツ: ピアノ独奏が向いています。同時に鳴らせるの�
 
 ### 体格に合わせる（自動調整）
 
-腕や指の長さはキャラごとに違います。デモ曲の値はあるキャラに合わせたものなので、自分のキャラで自動調整してください。
+腕や指の長さはキャラごとに違います。デモ曲の値は同梱のサンプルに合わせたものなので、自分のキャラで自動調整してください。
 
 - 1 曲だけ: ビューアで「指の位置を自動調整」→「設定を書き出す (song.json)」→ `songs/<id>/song.json` に上書き
 - 全曲: `http://localhost:8001/tools/autofit.html?vrm=<.vrm の URL>` を開く（またはページでファイルを選ぶ）→ ▶ →「song.json を書き出す」。`&songs=id1,id2` で曲をしぼれます
@@ -142,13 +142,14 @@ MIDI のコツ: ピアノ独奏が向いています。同時に鳴らせるの�
 | `viewer/` | デモ兼調整ツール |
 | `tools/` | ローカルサーバー、add_song、自動調整ページ、apply_fit |
 | `songs/` | デモ曲 |
+| `models/` | サンプルのキャラクター（VRM パブリック・ライセンス 1.0。`models/README.md`） |
 
 `npm test` で運指と表情のテストを実行します。
 
 ## 注意と制限
 
-- VRM 0.x のモデルと Chrome で確認しています。VRM 1.0 も three-vrm 経由で動くはずですが、まだあまり試していません
-- 表情は VRM の標準プリセット（`happy` `relaxed` `sad` `angry` `blink` `aa` `ou`）と、任意のカスタム `Surprised` を使います
+- Chrome で、VRM 1.0 のモデル（同梱のサンプルと、VRM 仕様のサンプルの Seed-san）と、VRoid Studio の VRM 0.x のモデルで確認しています
+- 表情は VRM の標準プリセット（`happy` `relaxed` `sad` `angry` `surprised` `blink` `aa` `ou`）を使います。VRM 0.x では、カスタムの `Surprised` があればそれを使います
 - スカートや髪と、腕・鍵盤との当たり判定はありません
 - MIDI キーボードからのリアルタイム演奏には対応していません（曲は前もって計算します）
 - ブラウザは、ページを操作するまで音を止めます。必要ならクリックで `perf.clock.ctx.resume()` を呼んでください
@@ -156,6 +157,7 @@ MIDI のコツ: ピアノ独奏が向いています。同時に鳴らせるの�
 ## クレジットとライセンス
 
 - コード: [MIT License](LICENSE) © kaazu
+- サンプルのキャラクター `models/VRM1_Constraint_Twist_Sample.vrm`: (c) 2022 pixiv Inc.、[VRM パブリック・ライセンス 1.0](https://vrm.dev/licenses/1.0/)、[vrm-c/vrm-specification](https://github.com/vrm-c/vrm-specification/tree/master/samples/VRM1_Constraint_Twist_Sample) から無改変で同梱。MIT ライセンスの対象外です。ファイルのライセンス設定で再配布・改変が許可されています。詳しくは [models/README.md](models/README.md)
 - デモ曲の MIDI: [Mutopia Project](https://www.mutopiaproject.org/)、パブリックドメイン
   - J. S. バッハ「ポロネーズ ヘ長調」（アンナ・マグダレーナ・バッハのための音楽帳）— [piece 1013](https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=1013)
   - J. S. バッハ コラール「心のおくそこから」BWV 269 — [piece 378](https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=378)

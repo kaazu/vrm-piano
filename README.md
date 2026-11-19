@@ -21,9 +21,9 @@ cd vrm-piano
 npm run serve
 ```
 
-Open http://localhost:8001/viewer/ and drop a `.vrm` file onto the page (or press "Open file"). Pick a song and press ▶ Play. The piano samples (about 60 files) load from jsDelivr the first time.
+Open http://localhost:8001/viewer/. A sample avatar is loaded; pick a song and press ▶ Play. The piano samples (about 60 files) load from jsDelivr the first time.
 
-No VRM is included. You can make one with [VRoid Studio](https://vroid.com/en/studio) or use any VRM whose license allows it.
+To use your own avatar, drop a `.vrm` file onto the page (or press "Open file"), then press "Auto-fit fingers". VRM 0.x and VRM 1.0 both work. You can make one with [VRoid Studio](https://vroid.com/en/studio).
 
 The viewer and tools need a web server (ES modules and `fetch` do not work from `file://`). `tools/serve.mjs` is a small dependency-free server; any static server works.
 
@@ -31,7 +31,7 @@ The viewer and tools need a web server (ES modules and `fetch` do not work from 
 
 | Parameter | Meaning |
 |---|---|
-| `?vrm=<url>` | Load this VRM on start |
+| `?vrm=<url>` | Load this VRM on start (default: the bundled sample) |
 | `?songsDir=<url>` | Folder that contains `index.json` (default `../songs/`) |
 | `?lang=en` / `?lang=ja` | UI language (default: from the browser) |
 
@@ -120,7 +120,7 @@ To only compute the fingering: `node fingering/cli.js in.mid out.json`. To check
 
 ### Fitting to your avatar
 
-Every avatar has different arm and finger lengths. The values in the demo songs were tuned for one avatar, so run auto-fit for yours:
+Every avatar has different arm and finger lengths. The values in the demo songs were tuned for the bundled sample avatar, so run auto-fit for yours:
 
 - One song: in the viewer, press "Auto-fit fingers", then "Export settings (song.json)" and overwrite `songs/<id>/song.json`.
 - All songs: open `http://localhost:8001/tools/autofit.html?vrm=<url of your .vrm>` (or pick the file on the page), press ▶, then "Export song.json". Add `&songs=id1,id2` to limit the songs.
@@ -141,6 +141,7 @@ For automation, open it with `&auto=1`, save the result of `window.fitCompact()`
 | `viewer/` | Demo and tuning tool |
 | `tools/` | Local server, add_song, autofit page, apply_fit |
 | `songs/` | Demo songs |
+| `models/` | Sample avatar (VRM Public License 1.0, see `models/README.md`) |
 
 `npm test` runs the fingering and expression tests.
 
@@ -148,8 +149,8 @@ Code comments are mostly in Japanese.
 
 ## Notes and limitations
 
-- Tested with a VRM 0.x model in Chrome. VRM 1.0 models should work through three-vrm, but have not been tested much yet.
-- Expressions use the standard VRM presets (`happy`, `relaxed`, `sad`, `angry`, `blink`, `aa`, `ou`) and an optional custom `Surprised`.
+- Tested in Chrome with VRM 1.0 models (the bundled sample and Seed-san from the VRM specification samples) and a VRoid Studio VRM 0.x model.
+- Expressions use the standard VRM presets (`happy`, `relaxed`, `sad`, `angry`, `surprised`, `blink`, `aa`, `ou`); on VRM 0.x a custom `Surprised` is used if present.
 - Skirts and hair have no collision with the arms or keyboard.
 - Real-time playing from a MIDI keyboard is not supported (songs are computed in advance).
 - Browsers block audio until the user interacts with the page. Call `perf.clock.ctx.resume()` from a click if needed.
@@ -157,6 +158,7 @@ Code comments are mostly in Japanese.
 ## Credits and licenses
 
 - Code: [MIT License](LICENSE) © kaazu
+- Sample avatar `models/VRM1_Constraint_Twist_Sample.vrm`: (c) 2022 pixiv Inc., [VRM Public License 1.0](https://vrm.dev/licenses/1.0/), from [vrm-c/vrm-specification](https://github.com/vrm-c/vrm-specification/tree/master/samples/VRM1_Constraint_Twist_Sample). Not covered by the MIT License; its own license settings allow redistribution and modification. See [models/README.md](models/README.md).
 - Demo MIDI files: [Mutopia Project](https://www.mutopiaproject.org/), Public Domain
   - J. S. Bach, Polonaise in F major (Notebook for Anna Magdalena Bach) — [piece 1013](https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=1013)
   - J. S. Bach, Chorale "Aus meines Herzens Grunde" BWV 269 — [piece 378](https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=378)

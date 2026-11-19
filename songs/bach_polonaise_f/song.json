@@ -16,9 +16,9 @@
   "options": {
     "keyboard": {
       "scale": 0.65,
-      "height": 0.775,
+      "height": 0.88,
       "z": 0.28,
-      "x": 0.12
+      "x": 0.02
     },
     "body": {
       "x": 0,
@@ -35,7 +35,7 @@
       "wristTwist": 0,
       "flipCurl": false,
       "flipYaw": false,
-      "wristBack": 0.7,
+      "wristBack": 0.6,
       "tipSolve": true,
       "wristWeighted": true
     },
@@ -75,9 +75,9 @@
     "dynamics": true
   },
   "fit": {
-    "at": "2026-11-18",
-    "miss": 0.038,
-    "float": 0.264,
-    "reach": 0
+    "at": "2026-11-19",
+    "miss": 0.051,
+    "float": 0.03,
+    "reach": 0.004
   }
 }
