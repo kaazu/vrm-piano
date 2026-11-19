@@ -29,7 +29,7 @@
       "lookahead": 0.12,
       "wristTau": 0.06,
       "wristHeight": 0.03,
-      "reach": 0.84,
+      "reach": 0.9,
       "idleCurl": 0.35,
       "press": 0.012,
       "wristTwist": 0,
@@ -76,8 +76,8 @@
   },
   "fit": {
     "at": "2026-11-19",
-    "miss": 0.032,
+    "miss": 0.063,
     "float": 0,
-    "reach": 0
+    "reach": 0.018
   }
 }
